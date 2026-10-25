@@ -1,4 +1,4 @@
-CREATE OR ALTER  PROCEDURE [dbo].[DepotColis]
+CREATE OR ALTER  PROCEDURE dbo.DepotColis
 	@idClient INT,
 	@idPointRelais INT,
 	@idCasier INT,
