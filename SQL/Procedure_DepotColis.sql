@@ -1,5 +1,4 @@
-
-CREATE PROCEDURE DepotColis
+CREATE OR ALTER  PROCEDURE [dbo].[DepotColis]
 	@idClient INT,
 	@idPointRelais INT,
 	@idCasier INT,
@@ -35,7 +34,7 @@ BEGIN
 		)
 		BEGIN
 			THROW 50002,
-				  'Le point relais est inexistant !',
+				  'Le point relais n''existe pas !',
 				  1;
 		END;
 
@@ -55,7 +54,7 @@ BEGIN
 		(
 			SELECT 1
 			FROM dbo.CASIER 
-			WHERE IdCasier = @idCasier AND IdPoint = @idPointRelais AND @taille = Taille
+			WHERE IdCasier = @idCasier AND IdPoint = @idPointRelais 
 		)
 		BEGIN
 			THROW 50004,
@@ -67,7 +66,7 @@ BEGIN
 		(
 			SELECT 1
 			FROM dbo.CASIER 
-			WHERE IdCasier = @idCasier AND @taille <= Taille AND Statut = 'DISPONIBLE'
+			WHERE IdCasier = @idCasier AND IdPoint = @idPointRelais AND @taille <= Taille AND Statut = 'DISPONIBLE'
 		)
 		BEGIN
 			THROW 50005,
@@ -113,4 +112,3 @@ BEGIN
 	END CATCH;
 	
 END;
-GO
