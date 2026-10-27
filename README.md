@@ -31,8 +31,12 @@ Les tables principales sont :
 - `RETRAIT` : informations sur les retraits effectués.
 - `TECHNICIEN` : informations sur les techniciens.
 - `INCIDENT` : incidents techniques associés aux points relais et aux casiers.
+- `HISTORIQUE_COLIS` : l'historique des changement de statut de chaque colis.
 
-Des scripts d'insertion permettent de peupler les tables avec des données de test.
+Le modèle intègre des clés primaires et étrangères ainsi que des contraintes permettant de contrôler les statuts, les tailles et l'unicité de certaines données.
+
+Le jeu de données de test contient des points relais, des casiers, des clients, des colis, des retraits et des incidents techniques.
+
 
 ### 3.2. Procédures stockées et transactions
 
@@ -42,7 +46,7 @@ Une procédure stockée permet d'enregistrer le dépôt d'un colis. Elle doit no
 
 - vérifier l'existence du client ;
 - vérifier que le point relais existe et est actif ;
-- rechercher un casier disponible et compatible avec le colis ;
+- Vérifie que le casier disponible et compatible avec le colis ;
 - enregistrer le colis ;
 - affecter le casier au colis ;
 - retourner l'identifiant du colis créé.
@@ -66,26 +70,20 @@ La transaction garantit que toutes les modifications sont validées ensemble ou 
 
 **Fonction scalaire : calcul du prix de stockage**
 
-Cette fonction calcule le coût de stockage d'un colis à partir de son poids et de sa durée de stockage(heure), selon une règle tarifaire définie dans le projet.
+fonction scalaire calculant le prix de stockage à partir du poids du colis et de la durée de stockage.
+
+Règle tarifaire : 0,50 € par kilogramme, auxquels s'ajoutent 0,10 € par heure de stockage.
 
 
 **Fonction retournant une table : recherche des colis**
 
-Cette fonction permet de rechercher les colis selon plusieurs critères facultatifs :
+fonction retournant une table permettant de filtrer les colis selon le point relais, le statut, la taille et les dates de dépôt. Les critères facultatifs peuvent être ignorés en leur passant NULL.
 
-- point relais ;
-- statut du colis ;
-- taille ;
-- date minimale de dépôt ;
-- date maximale de dépôt.
-
-Elle peut être utilisée directement dans une requête `SELECT`, ce qui facilite l'exploitation des données.
+Les deux fonctions sont utilisées dans des requêtes SQL afin d'illustrer leur intérêt dans l'exploitation de la base.
 
 ### 3.4. Curseur d'analyse des points relais
 
-Un curseur permet de parcourir les points relais et de calculer le nombre d'incidents enregistrés pendant une période définie.
-
-Un niveau de surveillance est ensuite attribué selon les règles suivantes :
+Un curseur parcourt les points relais et affiche leur nombre d'incidents sur une période donnée ainsi que leur niveau de surveillance :
 
 | Nombre d'incidents | Niveau de surveillance |
 |---|---|
@@ -95,13 +93,13 @@ Un niveau de surveillance est ensuite attribué selon les règles suivantes :
 
 Le traitement affiche le nom du point relais, le nombre d'incidents et son niveau de surveillance.
 
-Une alternative sans curseur, fondée sur des opérations ensemblistes SQL, est également étudiée afin de comparer les deux approches.
+Une solution alternative utilisant une requête ensembliste avec LEFT JOIN, COUNT et CASE est également proposée. Les deux approches sont comparées dans le dossier technique.
 
 ### 3.5. Triggers
 
 **Historisation des changements de statut**
 
-Un trigger associé à la table `COLIS` enregistre automatiquement les changements de statut dans la table `HISTORIQUE_COLIS`.
+Un trigger associé à la table `COLIS` enregistre automatiquement  les changements de statut des colis, en conservant l'ancien statut et le nouveau statut dans la table `HISTORIQUE_COLIS`.
 
 Les informations conservées sont :
 
@@ -114,29 +112,41 @@ Cette historisation permet de suivre les changements de statut au cours du temps
 
 **Contrôle métier des retraits**
 
-Un trigger associé à la table `RETRAIT` empêche l'enregistrement d'un retrait lorsque le colis concerné possède un statut qui n'autorise pas cette opération.
+Un trigger associé à la table `RETRAIT` empêche empêche l'insertion d'un retrait lorsque le statut du colis ne permet pas cette opération et renvoie un message explicite.
 
 En cas de tentative non autorisée, l'opération est bloquée et un message explicite est retourné.
 
 ## 4. Organisation des fichiers SQL
 
-Les scripts sont organisés afin de faciliter leur lecture, leur exécution et leur maintenance.
+Le projet est organisé en deux dossiers principaux : SQL/, qui regroupe les scripts SQL, et Documentation/, qui contient le dossier technique.
+
+Les fichiers SQL couvrent la création et le peuplement des tables, les procédures stockées, les fonctions, l'analyse des incidents et les triggers.
 
 Exemple d'organisation du projet :
 
 ```text
 DropBoxy/
 │
-├── README.md
+├── Documentation/
+│   └── Dossier technique - Projet DropBoxy.pdf
 │
-├── sql/
-│   ├── creation_tables.sql
+├── SQL/
+│   ├── Fonction_Scalaire_CalculerPrixStockage.sql
+│   ├── Procedure_DepotColis.sql
+│   ├── Tables.sql
+│   ├── Fonction_Table_RechercherColis.sql
+│   ├── Trigger_ControleRetraitsql
+│   ├── Curseur.sql
+│   ├── Procedure_RetraitColis.sql
+│   └── Trigger_HistoriqueColis.sql
 │
-└── documentation/
-    └── dossier_technique.pdf
+├── .gitattributes
+├── .gitignore
+├── Conception Base de Données.slnx
+└── README.md
 ```
 
-*Remarque : cette arborescence est une proposition. Les noms des fichiers doivent être adaptés à l'organisation réelle du projet.*
+
 
 ## 5. Guide d'installation et d'utilisation
 
@@ -176,79 +186,36 @@ ORDER BY DateModification DESC;
 
 ## 6. Tests effectués
 
-Les tests ont pour objectif de vérifier le bon fonctionnement des opérations métier et le respect des règles de gestion.
+Les tests documentés couvrent notamment :
 
-Les scénarios suivants sont à exécuter et à valider avant la livraison.
-
-### Tests des procédures stockées
-
-- Dépôt d'un colis avec un client existant et un point relais actif.
-- Tentative de dépôt avec un client inexistant.
-- Tentative de dépôt dans un point relais inactif.
-- Tentative de dépôt sans casier disponible ou compatible.
-- Retrait d'un colis existant avec un code valide.
-- Tentative de retrait avec un code incorrect.
-- Tentative de retrait d'un colis dont le statut ne permet pas le retrait.
-- Vérification de l'annulation des modifications en cas d'erreur.
-
-### Tests des fonctions
-
-- Vérification du prix de stockage pour différents poids et différentes durées.
-- Recherche des colis avec un seul critère.
-- Recherche des colis avec plusieurs critères.
-- Vérification du résultat lorsque certains critères sont absents.
-
-### Tests du curseur
-
-- Vérification du niveau NORMAL pour un point relais sans incident.
-- Vérification du niveau SURVEILLANCE pour un point relais ayant entre un et trois incidents.
-- Vérification du niveau PRIORITAIRE pour un point relais ayant plus de trois incidents.
-- Vérification de la période utilisée pour le comptage des incidents.
-
-### Tests des triggers
-
-- Vérification de l'ajout d'une ligne dans `HISTORIQUE_COLIS` après un changement de statut.
-- Vérification de la conservation de l'ancien et du nouveau statut.
-- Tentative d'enregistrement d'un retrait non autorisé.
-- Vérification que les opérations refusées ne laissent pas de modifications incohérentes.
-
-*Les résultats de chaque test doivent être renseignés après exécution effective des scripts.*
+- le dépôt valide d'un colis et le passage du casier au statut INDISPONIBLE ;
+- le refus d'un nouveau dépôt dans un casier déjà indisponible ;
+- le refus d'un retrait avec un colis inexistant, déjà retiré ou un code incorrect ;
+- le retrait valide, avec mise à jour du colis et libération du casier ;
+- le calcul du prix de stockage ;
+- la recherche des colis selon différents critères ;
+- le classement des points relais selon le nombre d'incidents ;
+- l'historisation des changements de statut ;
+- le blocage d'un retrait non autorisé.
 
 ## 7. Difficultés rencontrées
 
-Les principales difficultés susceptibles d'être rencontrées lors de la réalisation du projet concernent :
+Les principales difficultés ont concerné l'harmonisation des scripts SQL, la gestion des identifiants IDENTITY, les différences de types de données pour les tailles, l'ajout du code de retrait dans la table COLIS, la gestion des transactions et la mise en place des triggers.
 
-- la gestion des transactions et des erreurs avec `TRY...CATCH`, `COMMIT` et `ROLLBACK` ;
-- la sélection d'un casier compatible et disponible ;
-- le maintien de la cohérence entre le statut du colis, le retrait et la disponibilité du casier ;
-- la gestion des critères facultatifs dans une fonction retournant une table ;
-- la compréhension du fonctionnement des curseurs et la recherche d'une alternative ensembliste ;
-- la gestion des anciennes et nouvelles valeurs dans les triggers ;
-- le respect de l'ordre de création des objets SQL et la préparation des jeux de données de test.
-
-Cette section devra être complétée avec les difficultés réellement rencontrées et les solutions mises en œuvre.
+L'intégration des scripts a également nécessité de définir un ordre d'exécution précis et de coordonner les développements réalisés en binôme.
 
 ## 8. Limites et améliorations possibles
 
-Plusieurs améliorations pourraient être apportées à la solution :
+- Plusieurs améliorations sont envisageables :
+- sélectionner automatiquement un casier compatible et disponible ;
+- renforcer la gestion des dépôts simultanés ;
+- utiliser DATETIME2 pour conserver précisément l'heure du dépôt ;
+- sécuriser le code de retrait et limiter les tentatives ;
+- ajouter des contrôles sur les valeurs négatives ou nulles dans le calcul du prix ;
+- enrichir l'historique avec l'identité de l'utilisateur à l'origine de la modification ;
 
-- ajouter une gestion plus détaillée des erreurs et des messages retournés par les procédures ;
-- renforcer la gestion de la concurrence pour éviter qu'un même casier soit attribué simultanément à plusieurs colis ;
-- ajouter des contraintes `CHECK`, `UNIQUE` et `NOT NULL` lorsque cela est pertinent ;
-- optimiser les recherches grâce à des index adaptés ;
-- remplacer le curseur par une requête ensembliste utilisant des jointures, des agrégations et une expression `CASE` ;
-- enrichir l'historisation avec l'identification de l'utilisateur à l'origine de la modification ;
-- ajouter des tests automatisés pour les cas nominaux, les erreurs et les situations limites ;
-- améliorer la sécurité grâce à une gestion des rôles et des permissions SQL Server.
 
 ## 9. Membres et répartition des tâches
-
-**Membres du binôme :**
-
-- Membre 1 : [Nom et prénom]
-- Membre 2 : [Nom et prénom]
-
-**Répartition du travail :**
 
 ### Maimouna Sokhna Thiam :
 
@@ -273,8 +240,8 @@ La répartition doit refléter le travail réellement effectué. Les deux membre
 
 ## 10. Conclusion
 
-Ce projet permet de mettre en pratique les principales fonctionnalités de Transact-SQL sous Microsoft SQL Server : création et peuplement d'une base de données, procédures stockées, transactions, fonctions, curseurs et triggers.
+Ce projet met en pratique les principales fonctionnalités de Transact-SQL sous Microsoft SQL Server : procédures stockées, transactions, fonctions, curseurs et triggers.
 
-La solution proposée vise à fiabiliser les opérations de dépôt et de retrait, à faciliter la recherche des colis, à analyser les incidents des points relais et à conserver une trace des changements de statut.
+Il vise à fiabiliser les opérations de dépôt et de retrait, à faciliter les recherches, à analyser les incidents des points relais et à conserver l'historique des changements de statut.
 
-Elle constitue une base d'amélioration du système d'information de DropBoxy, qui pourra être complétée par des optimisations, des tests automatisés et des mécanismes de sécurité supplémentaires.
+Le dossier technique présente les choix de conception, les tests réalisés, les difficultés rencontrées et les améliorations envisageables.
