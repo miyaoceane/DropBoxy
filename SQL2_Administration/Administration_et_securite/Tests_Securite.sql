@@ -64,3 +64,70 @@ REVERT;
 EXECUTE AS USER = 'u_direction_test';
 UPDATE POINT_RELAIS SET Statut = 'ACTIF' WHERE IdPoint = -1;
 REVERT;
+
+
+-- ===== EXPLOITATION =====
+--Test 1 : Exploitation consulte les colis
+
+EXECUTE AS USER = 'test_exploit';
+
+SELECT * FROM COLIS;
+
+REVERT;
+
+--Test 2 : Exploitation modifie un colis
+
+EXECUTE AS USER = 'test_exploit';
+
+UPDATE COLIS
+SET Statut = 'DEPOSE'
+WHERE IdColis = 1;
+
+REVERT;
+
+--Test 3 : Exploitation tente de consulter les incidents
+
+EXECUTE AS USER = 'test_exploit';
+
+SELECT * FROM INCIDENT;
+
+REVERT;
+
+-- ===== TECHNICIEN =====
+
+--Test 1 : Technicien consulte les incidents
+
+EXECUTE AS USER = 'test_tech';
+
+SELECT * FROM INCIDENT;
+
+REVERT;
+
+--Test 2 : Technicien modifie un incident
+
+EXECUTE AS USER = 'test_tech';
+
+UPDATE INCIDENT
+SET Statut = 'RESOLU'
+WHERE IdIncident = 4;
+
+REVERT;
+
+--Test 3 : Technicien tente de modifier un colis
+
+EXECUTE AS USER = 'test_tech';
+
+UPDATE COLIS
+SET Statut = 'RETIRE'
+WHERE IdColis = 1;
+
+REVERT;
+
+--Test 4 : Technicien tente de consulter les clients
+
+EXECUTE AS USER = 'test_tech';
+
+SELECT * FROM CLIENT;
+
+REVERT;
+
