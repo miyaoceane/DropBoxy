@@ -1,0 +1,14 @@
+USE DropBoxy;
+GO
+
+CREATE OR ALTER VIEW dbo.V_CLIENT_IDENTITE
+AS
+SELECT IdClient, Nom, Prenom          
+FROM dbo.CLIENT;
+GO
+
+CREATE OR ALTER VIEW dbo.V_TECHNICIEN_REPORTING
+AS
+SELECT IdTechnicien, Nom, Prenom, Specialite   
+FROM dbo.TECHNICIEN;
+GO
