@@ -186,7 +186,73 @@ Plusieurs améliorations pourraient être envisagées :
 - mettre en place des tableaux de bord de reporting ;
 - renforcer la protection des données sensibles.
 
-## 9. Conclusion
+## 9. Membres et répartition des tâches
+
+Le projet a été réalisé en binôme. Les tâches ont été réparties entre les deux membres afin de couvrir les différentes parties de l'administration, de la sécurité, des sauvegardes, de la restauration et du reporting.
+
+### Maimouna Sokhna Thiam :
+
+**Administration et sécurité :**
+- Élaboration de la matrice des permissions pour les profils EXPLOITATION et TECHNICIEN.
+- Création des rôles `role_exploitation` et `role_technicien`.
+- Attribution des permissions nécessaires à ces deux rôles.
+- Création des utilisateurs de test correspondants.
+- Préparation des scripts de tests pour ces deux profils.
+
+**Sauvegardes :**
+- Réalisation de la sauvegarde complète (FULL).
+- Vérification de la sauvegarde complète.
+- Réalisation de modifications dans la base de données.
+- Réalisation de la sauvegarde différentielle (DIFF).
+- Vérification de la sauvegarde différentielle.
+
+**Reporting :**
+- Création d'une requête sur le nombre de colis par point relais.
+- Création d'une requête sur le nombre de casiers disponibles par point relais.
+
+**Documentation :**
+- Rédaction des parties concernant les rôles EXPLOITATION et TECHNICIEN.
+- Rédaction de la partie concernant les sauvegardes.
+- Documentation des requêtes de reporting réalisées.
+
+### Ablan Miya Océane Kouadio :
+
+**Administration et sécurité :**
+- Élaboration de la matrice des permissions pour les profils SERVICE_CLIENT et DIRECTION.
+- Création des rôles `role_service_client` et `role_direction`.
+- Attribution des permissions nécessaires à ces deux rôles.
+- Création des utilisateurs de test correspondants.
+- Préparation des scripts de tests pour ces deux profils.
+
+**Restauration :**
+- Récupération des fichiers de sauvegarde FULL et DIFF réalisés par le membre 1.
+- Restauration de la sauvegarde complète dans la base `DropBoxy_Test` avec l'option `NORECOVERY`.
+- Application de la sauvegarde différentielle.
+- Finalisation de la restauration avec l'option `RECOVERY`.
+- Vérification de la présence des tables et des données.
+- Vérification de la récupération des modifications effectuées avant la sauvegarde différentielle.
+
+**Reporting :**
+- Création d'une requête sur le nombre de colis par statut.
+- Création d'une requête sur le nombre d'incidents par point relais.
+
+**Documentation :**
+- Rédaction des parties concernant les rôles SERVICE_CLIENT et DIRECTION.
+- Rédaction de la partie concernant la restauration.
+- Documentation des requêtes de reporting réalisées.
+
+### Travail réalisé en commun
+
+Les deux membres ont également participé à :
+- l'intégration des différents scripts SQL ;
+- la vérification du fonctionnement des quatre rôles ;
+- la validation des opérations autorisées et interdites ;
+- la réalisation des tests finaux ;
+- la vérification de la cohérence générale du projet.
+
+Cette répartition permet de distinguer les responsabilités de chaque membre tout en assurant une validation commune de la solution.
+
+## 10. Conclusion
 
 Ce projet permet de mettre en pratique les mécanismes d'administration et de sécurité de Microsoft SQL Server.
 
